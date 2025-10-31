@@ -883,6 +883,7 @@ void convert_percent_to_int(char *string, int *result, int max_value)
 // A function to make sure all settings are in their correct range
 void validate_settings(Geometry *geo)
 {
+    log_debug("Validating settings...");
     // Reduce number of buttons if they can't all fit on screen
     if (config.icon_size * config.max_buttons > (unsigned int) geo->screen_width) {
         unsigned int i;

@@ -25,6 +25,7 @@ NSVGrasterizer *rasterizer = NULL;
 // A function to initalize SVG rasterization
 int init_svg()
 {
+    log_debug("Initializing SVG rasterizer");
     rasterizer = nsvgCreateRasterizer();
     if (rasterizer == NULL) {
         log_fatal("Could not initialize SVG rasterizer.");

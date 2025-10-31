@@ -191,7 +191,8 @@ Uint32 repeat_period;
 
 // A function to initialize SDL
 static void init_sdl()
-{    
+{
+    log_debug("Initializing SDL");
     // Set flags, hints
     Uint32 sdl_flags = SDL_INIT_VIDEO;
 #ifdef __unix__
@@ -216,6 +217,7 @@ static void init_sdl()
 // A function to create the window and renderer
 static void create_window()
 {
+    log_debug("Creating SDL Window and Renderer");
     window = SDL_CreateWindow(PROJECT_NAME,
                  SDL_WINDOWPOS_UNDEFINED,
                  SDL_WINDOWPOS_UNDEFINED,
@@ -267,6 +269,7 @@ static void create_window()
 // A function to initialize the SDL_image library
 static void init_sdl_image()
 {
+    log_debug("Initializing SDL_image");
     int img_flags = IMG_INIT_PNG | IMG_INIT_JPG | IMG_INIT_WEBP;
     if (!(IMG_Init(img_flags) & img_flags))
         log_fatal("Could not initialize SDL_image\n%s", IMG_GetError());
@@ -275,6 +278,7 @@ static void init_sdl_image()
 // A function to set the color of the renderer
 void set_draw_color()
 {
+    log_debug("Setting renderer draw color");
     SDL_Color *color = NULL;
     if (config.background_mode == BACKGROUND_COLOR)
         color = &config.background_color;
@@ -295,10 +299,11 @@ void set_draw_color()
 // A function to initialize SDL's TTF subsystem
 static void init_sdl_ttf()
 {
+    log_debug("Initializing SDL_ttf");
     if (TTF_Init() == -1)
         log_fatal("Could not initialize SDL_ttf\n%s", TTF_GetError());
-    
-    title_info = (TextInfo) { 
+
+    title_info = (TextInfo) {
         .font_size = (int) config.title_font_size,
         .shadow = config.title_shadows,
         .font_path = &config.title_font_path,
@@ -322,10 +327,11 @@ static void init_sdl_ttf()
 // A function to close subsystems and free memory before quitting
 static void cleanup()
 {
+    log_debug("Cleaning up and quitting");
     // Wait until all threads have completed
     SDL_WaitThread(Slideshowhread, NULL);
     SDL_WaitThread(clock_thread, NULL);
-    
+
     // Destroy renderer and window
     if (renderer != NULL) {
         SDL_DestroyRenderer(renderer);
@@ -422,12 +428,12 @@ static void handle_keypress(SDL_Keysym *key)
         log_debug("Selected Entry:\n"
             "Title: %s\n"
             "Icon Path: %s\n"
-            "Command: %s", 
-            current_entry->title, 
-            current_entry->icon_path, 
+            "Command: %s",
+            current_entry->title,
+            current_entry->icon_path,
             current_entry->cmd
         );
-        
+
         execute_command(current_entry->cmd);
     }
     else if (key->sym == SDLK_BACKSPACE)
@@ -447,6 +453,7 @@ static void handle_keypress(SDL_Keysym *key)
 // A function to quit the slideshow mode in case of error or program exit
 void quit_slideshow()
 {
+    log_debug("Quitting slideshow mode");
     // Free allocated image paths
     for (int i = 0; i < slideshow->num_images; i++)
         free(slideshow->images[i]);
@@ -458,6 +465,7 @@ void quit_slideshow()
 // A function to initialize the slideshow background mode
 static void init_slideshow()
 {
+    log_debug("Initializing slideshow background mode");
     if (!directory_exists(config.slideshow_directory)) {
         log_error("Slideshow directory '%s' does not exist, "
             "Switching to color background mode",
@@ -482,19 +490,19 @@ static void init_slideshow()
 
     // Find background images from directory
     scan_slideshow_directory(slideshow, config.slideshow_directory);
-    
+
     // Handle errors
     if (!slideshow->num_images) {
         log_error("No images found in slideshow directory '%s', "
-            "Changing background mode to color", 
+            "Changing background mode to color",
             config.slideshow_directory
         );
         config.background_mode = BACKGROUND_COLOR;
         quit_slideshow();
-    } 
+    }
     else if (slideshow->num_images == 1) {
         log_error("Only one image found in slideshow directory %s"
-            "Changing background mode to single image", 
+            "Changing background mode to single image",
             config.slideshow_directory
         );
         free(config.background_image);
@@ -515,9 +523,10 @@ static void init_slideshow()
 // A function to initialize the screensaver feature
 static void init_screensaver()
 {
+    log_debug("Initializing screensaver");
     // Allocate memory for structure
     screensaver = malloc(sizeof(Screensaver));
-    
+
     // Convert intensity string to float
     char intensity[PERCENT_MAX_CHARS];
     if (config.screensaver_intensity_str[0] != '\0')
@@ -541,12 +550,12 @@ static void init_screensaver()
         screensaver->alpha_end_value = 255.0f;
 
     screensaver->transition_change_rate = screensaver->alpha_end_value / ((float) SCREENSAVER_TRANSITION_TIME / (float) refresh_period);
-    
+
     // Render texture
     SDL_Surface *surface = NULL;
-    surface = SDL_CreateRGBSurfaceWithFormat(0, 
-                  geo.screen_width, 
-                  geo.screen_height, 
+    surface = SDL_CreateRGBSurfaceWithFormat(0,
+                  geo.screen_width,
+                  geo.screen_height,
                   32,
                   SDL_PIXELFORMAT_ARGB8888
               );
@@ -602,7 +611,7 @@ static int load_menu(Menu *menu, bool set_back_menu, bool reset_position)
     buttons = current_menu->num_entries - (current_menu->page)*config.max_buttons;
     if (buttons > config.max_buttons)
         buttons = config.max_buttons;
-    
+
     // Recalculate the screen geometry
     calculate_button_geometry(current_menu->root_entry, (int) buttons);
     if (config.highlight) {
@@ -876,6 +885,7 @@ static void execute_command(const char *command)
 // A function to initialize the gamepad struct
 static void init_gamepad(Gamepad **gamepad, int device_index)
 {
+    log_debug("Initializing gamepad at device index %i", device_index);
     *gamepad = malloc(sizeof(Gamepad));
     **gamepad = (Gamepad) {
         .device_index = device_index,
@@ -889,6 +899,7 @@ static void init_gamepad(Gamepad **gamepad, int device_index)
 // A function to open the SDL controller
 static void open_controller(Gamepad *gamepad, bool raise_error)
 {
+    log_debug("Opening gamepad at device index %i", gamepad->device_index);
     gamepad->controller = SDL_GameControllerOpen(gamepad->device_index);
     if (gamepad->controller == NULL) {
         if (raise_error)
@@ -905,6 +916,7 @@ static void open_controller(Gamepad *gamepad, bool raise_error)
 // A function to connect gamepad(s)
 static void connect_gamepad(int device_index, bool open, bool raise_error)
 {
+    log_debug("Connecting gamepad %i", device_index);
     if (device_index >= 0) {
         Gamepad *gamepad = NULL;
         for (gamepad = gamepads; gamepad != NULL; gamepad = gamepad->next) {
@@ -936,6 +948,7 @@ static void connect_gamepad(int device_index, bool open, bool raise_error)
 // A function to disconnect gamepad(s)
 static void disconnect_gamepad(int id, bool disconnect, bool remove)
 {
+    log_debug("Disconnecting gamepad %i", id);
     for (Gamepad *i = gamepads; i != NULL;) {
         if (id < 0 || i->id == id) {
             if (disconnect)
@@ -1017,7 +1030,7 @@ static void update_slideshow()
     // If image duration time has elapsed, load the next image and start the transition
     if (!state.slideshow_transition && (ticks.main - ticks.slideshow_load > config.slideshow_image_duration) &&
     !state.slideshow_paused) {
-        
+
         // Render the new background image in a separate thread so we don't block the main thread
         if (!state.slideshow_background_rendering && !state.slideshow_background_ready) {
             Slideshowhread = SDL_CreateThread(load_next_slideshow_background_async, "Slideshow Thread", (void*) slideshow);
@@ -1043,10 +1056,10 @@ static void update_slideshow()
         }
     }
     else if (state.slideshow_transition) {
-        
+
         // Increase the transparency
         slideshow->transition_alpha += slideshow->transition_change_rate;
-        
+
         // If transition is done, destroy old background and replace it with the new one
         if (slideshow->transition_alpha >= 255.0f) {
             SDL_SetTextureAlphaMod(slideshow->transition_texture, 0xFF);
@@ -1093,7 +1106,7 @@ static void update_screensaver()
             state.screensaver_transition = false;
             if (config.background_mode == BACKGROUND_SLIDESHOW) {
                 state.slideshow_paused = false;
-                
+
                 // Reset the slideshow time so we don't have a transition immediately 
                 // after coming out of screensaver mode
                 ticks.slideshow_load = ticks.main;
@@ -1144,6 +1157,7 @@ static void update_clock(bool block)
 
 static inline void pre_launch()
 {
+    log_debug("Preparing to launch application");
     if (gamepads != NULL)
         disconnect_gamepad(-1, true, false);
 
@@ -1156,6 +1170,7 @@ static inline void pre_launch()
 
 static inline void post_launch()
 {
+    log_debug("post_launch");
     // Rebaseline the timing after the program is done
     ticks.main = SDL_GetTicks();
     ticks.last_input = ticks.main;
@@ -1208,7 +1223,7 @@ void print_version(FILE *stream)
     fprintf(stream, "  SDL_ttf   %u.%u.%u" endline, ttf_version->major, ttf_version->minor, ttf_version->patch);
 }
 
-int main(int argc, char *argv[]) 
+int main(int argc, char *argv[])
 {
     int error;
     char *config_file_path = NULL;
@@ -1233,7 +1248,7 @@ int main(int argc, char *argv[])
     init_sdl_image();
     init_sdl_ttf();
     validate_settings(&geo);
-    
+
     // Initialize slideshow
     if (config.background_mode == BACKGROUND_SLIDESHOW)
         init_slideshow();
@@ -1289,7 +1304,7 @@ int main(int argc, char *argv[])
         init_clock(clk);
         ticks.clock_update = ticks.main;
     }
-    
+
     // Render highlight
     if (config.highlight) {
         int button_height = config.icon_size + config.title_padding + geo.font_height;
@@ -1311,16 +1326,16 @@ int main(int argc, char *argv[])
     // Render background overlay
     if (config.background_overlay) {
         SDL_Surface *overlay_surface = NULL;
-        overlay_surface = SDL_CreateRGBSurfaceWithFormat(0, 
-                              geo.screen_width, 
-                              geo.screen_height, 
+        overlay_surface = SDL_CreateRGBSurfaceWithFormat(0,
+                              geo.screen_width,
+                              geo.screen_height,
                               32,
                               SDL_PIXELFORMAT_ARGB8888
                           );
-        Uint32 overlay_color = SDL_MapRGBA(overlay_surface->format, 
-                                   config.background_overlay_color.r, 
-                                   config.background_overlay_color.g, 
-                                   config.background_overlay_color.b, 
+        Uint32 overlay_color = SDL_MapRGBA(overlay_surface->format,
+                                   config.background_overlay_color.r,
+                                   config.background_overlay_color.g,
+                                   config.background_overlay_color.b,
                                    config.background_overlay_color.a
                                );
         SDL_FillRect(overlay_surface, NULL, overlay_color);
@@ -1338,7 +1353,7 @@ int main(int argc, char *argv[])
         debug_video(renderer, &display_mode);
         debug_settings();
         debug_gamepad(gamepad_controls);
-        debug_hotkeys(hotkeys);    
+        debug_hotkeys(hotkeys);
         debug_menu_entries(config.first_menu, config.num_menus);
     }
 
@@ -1350,7 +1365,7 @@ int main(int argc, char *argv[])
     // Execute startup command
     if (config.startup_cmd != NULL)
         execute_command(config.startup_cmd);
-    
+
     // Main program loop
     log_debug("Begin program loop");
     while (1) {
@@ -1365,7 +1380,7 @@ int main(int argc, char *argv[])
                     ticks.last_input = ticks.main;
                     handle_keypress(&event.key.keysym);
                     break;
-                
+
                 case SDL_MOUSEBUTTONDOWN:
                     if (config.mouse_select && event.button.button == SDL_BUTTON_LEFT) {
                         ticks.last_input = ticks.main;
