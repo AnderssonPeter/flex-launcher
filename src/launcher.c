@@ -227,6 +227,7 @@ static void create_window()
              );
     if (window == NULL)
         log_fatal("Could not create SDL Window\n%s", SDL_GetError());
+    log_debug("Hiding mouse cursor");
     SDL_ShowCursor(SDL_DISABLE);
 
     // Create HW accelerated renderer, get screen resolution for geometry calculations
@@ -249,8 +250,9 @@ static void create_window()
     }
     if (slideshow != NULL)
         slideshow->transition_change_rate = 255.0f / ((float) config.slideshow_transition_time / (float) refresh_period);
-
+    log_debug("Creating SDL Renderer");
     renderer = SDL_CreateRenderer(window, -1, renderer_flags);
+    log_debug("Setting renderer blend mode to blend");
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     if (renderer == NULL)
         log_fatal("Could not initialize renderer\n%s", SDL_GetError());
