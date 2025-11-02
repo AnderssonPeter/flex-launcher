@@ -8,6 +8,7 @@
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include <SDL_thread.h>
+#include <SDL_log.h>
 #include "launcher.h"
 #include <launcher_config.h>
 #include "image.h"
@@ -193,6 +194,9 @@ Uint32 repeat_period;
 static void init_sdl()
 {
     log_debug("Initializing SDL");
+    if (config.debug) {
+        SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
+    }
     // Set flags, hints
     Uint32 sdl_flags = SDL_INIT_VIDEO;
 #ifdef __unix__
